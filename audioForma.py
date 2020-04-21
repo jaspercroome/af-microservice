@@ -5,7 +5,6 @@ from urllib.request import urlopen
 
 from librosa import load, cqt, get_duration
 from librosa.effects import hpss
-# librosa_mv = librosa
 
 import importlib.util
 import sys
@@ -49,8 +48,6 @@ def songdata():
 
     print(file_stats)
     # return(mp3_filepath)
-
-    song = audioread.audio_open(mp3_filepath).samplerate
 
     return(str(song))
 
