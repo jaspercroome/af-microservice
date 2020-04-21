@@ -9,6 +9,7 @@ from librosa.effects import hpss
 
 import importlib.util
 import sys
+import audioread
 
 # spec = importlib.util.spec_from_file_location('librosa_mv', '/Users/Jasper/Documents/GitHub/afLambda/miniVenv-afLambda/__init__.py')
 
@@ -48,6 +49,10 @@ def songdata():
 
     print(file_stats)
     # return(mp3_filepath)
+
+    song = audioread.audio_open(mp3_filepath).samplerate
+
+    return(str(song))
 
     y, sr = load(mp3_filepath)
     duration = get_duration(y=y, sr=sr)
