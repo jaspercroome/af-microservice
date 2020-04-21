@@ -1,0 +1,146 @@
+{
+  "librosa": {
+    "load": {
+      "__audioread_load": {
+        "--audioread": { "audio_open": {} },
+        "--np": { "round": {}, "inf": {}, "concatenate": {} },
+        "util": { "buf_to_float": { "--np": { "frombuffer": {} } } }
+      }
+    },
+    "core.get_duration": {
+      "--audioread": {
+        "audio_open": { "available_backends": { "ffdec.py": { "END": {} } } }
+      },
+      "--np": { "asfortranarray": {} },
+      "util": {
+        "valid_audio": {
+          "ParameterError": {},
+          "--np": { "ndarray": {}, "floating": {}, "isfinite": {} }
+        }
+      }
+    },
+    "effects.hpss": {
+      "decompose": {
+        "hpss": {
+          "spectrum": { "magphase": { "--np": { "abs": {}, "exp": {} } } },
+          "--np": { "iscomplexobj": {}, "isscalar": {}, "empty_like": {} },
+          "util": {
+            "softmask": {
+              "--np": {
+                "any": {},
+                "float32": {},
+                "finfo": {},
+                "isfinite": {},
+                "issubdtype": {},
+                "floating": {},
+                "maximum": {}
+              }
+            }
+          }
+        }
+      },
+      "util": { "fix_length": { "--np": { "pad": {} } } },
+      "spectrum": {
+        "stft": {
+          "util": {
+            "pad_center": { "--np": { "pad": {} } },
+            "valid_audio": {
+              "ParameterError": {},
+              "--np": { "ndarray": {}, "floating": {}, "isfinite": {} }
+            },
+            "frame": { "--np": { "asarray": {}, "prod": {} } },
+            "MAX_MEM_BLOCK": {}
+          },
+          "filters": {
+            "get_window": {
+              "--six": { "callable": {} },
+              "--np": { "isscalar": {}, "ndarray": {}, "asarray": {} },
+              "-scipy": {
+                "signal": {
+                  "get_window": {
+                    "kaiser": {
+                      "--np": { "arange": {}, "ones": {}, "sqrt": {} }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "--np": { "pad": {}, "empty": {} }
+        },
+        "istft": {
+          "__overlap_add": { "none": {} },
+          "filters": {
+            "get_window": {
+              "--six": { "callable": {} },
+              "--np": { "isscalar": {}, "ndarray": {}, "asarray": {} },
+              "-scipy": {
+                "signal": {
+                  "get_window": {
+                    "kaiser": {
+                      "--np": { "arange": {}, "ones": {}, "sqrt": {} }
+                    }
+                  }
+                }
+              }
+            },
+            "fft": { "get_fftlib": { "--np": { "fft": {} } } },
+            "window_sumsquare": {
+              "--np": { "zeros": {} },
+              "get_window": {
+                "--six": { "callable": {} },
+                "--np": { "isscalar": {}, "ndarray": {}, "asarray": {} },
+                "-scipy": { "signal": { "get_window": {
+                  "kaiser": {
+                    "--np": { "arange": {}, "ones": {}, "sqrt": {} }
+                  } } }
+              },
+              "util": {
+                "normalize": {},
+                "pad_center": { "--np": { "pad": {} } }
+              }
+            },
+            "util": {
+              "pad_center": { "--np": { "pad": {} } },
+              "MAX_MEM_BLOCK": { "none": {} },
+              "tiny": {
+                "--np": {
+                  "asarray": {},
+                  "issubdtype": {},
+                  "finfo": {},
+                  "float32": {}
+                }
+              },
+              "fix_length": { "--np": { "pad": {} } }
+            }
+          },
+          "--np": { "ceil": {}, "zeros": {} }
+        }
+      }
+    },
+    "cqt": {
+      "--np": { "ceil": {}, "min": {}, "max": {}, "sqrt": {} },
+      "filters": { "window_bandwidth": { "--np": { "sum": {}, "abs": {} } } },
+      "audio": {
+        "BW_FASTEST": {
+          "--resampy": {
+            "filters": {
+              "get_filter": { "load_filter": { "np": { "load": {} } } }
+            }
+          }
+        },
+        "resample": {
+          "util": {
+            "valid_audio": {
+              "ParameterError": {},
+              "--np": { "ndarray": {}, "floating": {}, "isfinite": {} }
+            },
+            "fix_length": { "--np": { "pad": {} } }
+          },
+          "--np": { "ceil": {}, "sqrt": {} },
+          "--resampy": { "resample": {} }
+        }
+      }
+    }
+  }
+}
