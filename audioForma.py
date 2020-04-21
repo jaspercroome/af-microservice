@@ -49,8 +49,6 @@ def songdata():
     print(file_stats)
     # return(mp3_filepath)
 
-    return(str(song))
-
     y, sr = load(mp3_filepath)
     duration = get_duration(y=y, sr=sr)
     # split out the harmonic and percussive audio
