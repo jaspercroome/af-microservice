@@ -27,7 +27,7 @@ app=Flask(__name__)
 @app.route('/', methods=['GET','POST'])
 def songdata():
     if not request.json or not 'songUrlId' in request.json:
-        return('Heyyyyooo! \n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
+        return('Heyyyyoooo! \n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
     data = request.json
     song_url_id = data["songUrlId"]
     filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/c4da2c8c7dee32789759d68c7eb149ec90b6af96/midinotes.csv"
