@@ -1,1 +1,1 @@
-web: gunicorn routes:audioForma 
+web: gunicorn audioForma:app
