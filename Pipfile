@@ -9,6 +9,7 @@ verify_ssl = true
 flask = "*"
 pandas = "*"
 librosa = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
