@@ -44,7 +44,9 @@ def songdata():
 
     output.write(sample_30s.read())
 
-    print(mp3_filepath)
+    file_stats = os.stat(mp3_filepath)
+
+    print(file_stats)
     # return(mp3_filepath)
 
     y, sr = load(mp3_filepath)
