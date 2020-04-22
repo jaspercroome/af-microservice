@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask-cors import CORS
+from flask_cors import CORS 
 
 import os
 from urllib.request import urlopen
@@ -10,14 +10,6 @@ from librosa.effects import hpss
 import importlib.util
 import sys
 import audioread
-
-# spec = importlib.util.spec_from_file_location('librosa_mv', '/Users/Jasper/Documents/GitHub/afLambda/miniVenv-afLambda/__init__.py')
-
-# librosa_mv = importlib.util.module_from_spec(spec)
-
-# sys.modules[spec.name] = librosa_mv
-
-# spec.loader.exec_module(librosa_mv)
 
 from pandas import read_csv, DataFrame
 
