@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask-cors import CORS
 
 import os
 from urllib.request import urlopen
@@ -23,6 +24,7 @@ from pandas import read_csv, DataFrame
 from numpy import abs
 
 app=Flask(__name__)
+CORS(app)
 
 @app.route('/', methods=['GET','POST'])
 def songdata():
