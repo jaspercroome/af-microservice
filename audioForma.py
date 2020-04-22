@@ -24,7 +24,7 @@ def songdata():
         return('Heyyyyoooo! \n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
     data = request.json
     song_url_id = data["songUrlId"]
-    filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/c4da2c8c7dee32789759d68c7eb149ec90b6af96/midinotes.csv"
+    filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
     
     song_url="https://p.scdn.co/mp3-preview/"+song_url_id+".mp3"
 
