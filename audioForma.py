@@ -51,7 +51,7 @@ def songdata():
     cqt_h = abs(cqt(y, sr=sr,
                                 fmin=16.35, n_bins=108, bins_per_octave=12))
     c_df_h = DataFrame(notes).join(DataFrame(cqt_h), lsuffix='n').melt(
-        id_vars={'MIDI Note', 'Octave', 'Note'}).rename(columns={'variable': 'note_time', 'Octave': 'octave', 'Note': 'note_name', 'value': 'magnitude'})
+        id_vars={'MIDI Note', 'Octave', 'Note','Viz_Angle', 'circle_fifths_X', 'circle_fifths_Y'}).rename(columns={'variable': 'note_time', 'Octave': 'octave', 'Note': 'note_name', 'value': 'magnitude'})
     # Time transformation
     time_int = duration / cqt_h.shape[1]
     c_df_h['note_time'] = c_df_h['note_time'] * time_int * 1000
