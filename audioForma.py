@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 import os
 from urllib.request import urlopen
+from urllib import request, parse
 
 from librosa import load, cqt, get_duration
 from librosa.effects import hpss
@@ -60,11 +61,11 @@ def songdata():
 
     song_data = c_df_h_final.to_csv(index=False)
 
-    # post_data = parse.urlencode(song_data).encode
+    post_data = parse.urlencode(song_data).encode
 
-    # firebase_url = 'https://audioforma.firebaseio.com/analyzed_songs/'+song_url_id
+    firebase_url = 'https://audioforma.firebaseio.com/analyzed_songs/'+song_url_id
 
-    # req = request.Request(firebase_url,data=post_data)
+    req = request.Request(firebase_url,data=post_data)
 
     return(song_data, 200)
     
