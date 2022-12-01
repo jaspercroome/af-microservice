@@ -21,7 +21,7 @@ CORS(app)
 @app.route('/', methods=['GET','POST'])
 def songdata():
     if not request.json or not 'songUrlId' in request.json:
-        return('Heyyyyoooo! \n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
+        return('Welcome to the AudioForma Microservice!\n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
     data = request.json
     song_url_id = data["songUrlId"]
     filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
