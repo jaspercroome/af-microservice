@@ -58,7 +58,7 @@ def songdata():
 
     c_df_h_final = c_df_h[c_df_h['magnitude'].astype(float) >= .01]
 
-    song_data = c_df_h_final.to_csv(index=False)
+    song_data = c_df_h_final.groupby('note_time')
 
     return(song_data, 200)
     
