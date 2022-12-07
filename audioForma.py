@@ -20,8 +20,12 @@ CORS(app)
 
 @app.route('/', methods=['GET','POST'])
 def songdata():
-    if not request.json or not 'songUrlId' in request.json:
-        return('Welcome to the AudioForma Microservice!\n Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis')
+    if not request.data: 
+        return('no data in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
+    if not request.json: 
+        return('no json in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
+    if not 'songUrlId' in request.json:
+        return('no \'songUrlId\' in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
     data = request.json
     song_url_id = data["songUrlId"]
     filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
@@ -58,8 +62,8 @@ def songdata():
 
     c_df_h_final = c_df_h[c_df_h['magnitude'].astype(float) >= .01]
 
-    song_data = c_df_h_final.groupby('note_time')
-
+    song_data = c_df_h_final.groupby('note_time').apply(lambda x: x.to_json(orient='records')).to_json(orient='records')
+    
     return(song_data, 200)
     
 if __name__ == "__main__":
