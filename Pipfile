@@ -11,8 +11,7 @@ flask = "*"
 pandas = "*"
 librosa = "*"
 gunicorn = "*"
-numba = "==0.48.0"
 flask-cors = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
