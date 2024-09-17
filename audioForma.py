@@ -1,70 +1,67 @@
-from flask import Flask, request
-from flask_cors import CORS 
-
+from quart import Quart, request, Response, stream_with_context
+from quart_cors import cors
 import os
-from urllib.request import urlopen
+import aiohttp
+import aiofiles
+import librosa
+import numpy as np
+import pandas as pd
+import json
+import io
+import asyncio
 
-from librosa import load, cqt, get_duration
-from librosa.effects import hpss
+app = Quart(__name__)
+app = cors(app)
 
-import importlib.util
-import sys
-import audioread
+async def fetch_url(session, url):
+    async with session.get(url) as response:
+        return await response.read()
 
-from pandas import read_csv, DataFrame
+async def read_local_csv(file_path):
+    async with aiofiles.open(file_path, mode='r') as file:
+        return await file.read()
 
-from numpy import abs
-
-app=Flask(__name__)
-CORS(app)
-
-@app.route('/', methods=['GET','POST'])
-def songdata():
-    if not request.data: 
-        return('no data in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    if not request.json: 
-        return('no json in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    if not 'songUrlId' in request.json:
-        return('no \'songUrlId\' in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    data = request.json
-    song_url_id = data["songUrlId"]
-    filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
-    
-    song_url="https://p.scdn.co/mp3-preview/"+song_url_id+".mp3"
-
-    notes = read_csv(urlopen(filepath))
-
-    sample_30s = urlopen(song_url)
-
-    mp3_filepath = "tmp/"+song_url_id+".mp3"
-    
-    output = open(f'{mp3_filepath}', 'wb')
-
-    output.write(sample_30s.read())
-
-    file_stats = os.stat(mp3_filepath)
-
-    print(file_stats)
-    # return(mp3_filepath)
-
-    y, sr = load(mp3_filepath)
-    duration = get_duration(y=y, sr=sr)
-    # split out the harmonic and percussive audio
-    y_harmonic = hpss(y)[0]
-    # map out the values into an array
-    cqt_h = abs(cqt(y, sr=sr,
-                                fmin=16.35, n_bins=108, bins_per_octave=12))
-    c_df_h = DataFrame(notes).join(DataFrame(cqt_h), lsuffix='n').melt(
-        id_vars={'MIDI Note', 'Octave', 'Note','Viz_Angle', 'circle_fifths_X', 'circle_fifths_Y'}).rename(columns={'variable': 'note_time', 'Octave': 'octave', 'Note': 'note_name', 'value': 'magnitude'})
-    # Time transformation
+async def process_audio(y, sr, notes):
+    duration = librosa.get_duration(y=y, sr=sr)
+    y_harmonic, _ = librosa.effects.hpss(y)
+    cqt_h = np.abs(librosa.cqt(y_harmonic, sr=sr, fmin=16.35, n_bins=108, bins_per_octave=12))
     time_int = duration / cqt_h.shape[1]
-    c_df_h['note_time'] = c_df_h['note_time'] * time_int * 1000
-
-    c_df_h_final = c_df_h[c_df_h['magnitude'].astype(float) >= .01]
-
-    song_data = c_df_h_final.groupby('note_time').apply(lambda x: x.to_json(orient='records')).to_json(orient='records')
     
-    return(song_data, 200)
+    for i, col in enumerate(cqt_h.T):
+        c_df_h = pd.DataFrame(notes).assign(magnitude=col)
+        c_df_h['note_time'] = i * time_int * 1000
+        c_df_h_final = c_df_h[c_df_h['magnitude'] >= 0.01]
+        
+        if not c_df_h_final.empty:
+            yield c_df_h_final.to_dict(orient='records')
+
+@app.route('/', methods=['GET', 'POST'])
+async def songdata():
+    if not await request.is_json or 'songUrlId' not in (await request.json):
+        return 'Invalid request. Send a POST request with {"songUrlId":"xxxxxx"} in the body for analysis', 400
     
-if __name__ == "__main__":
+    data = await request.json
+    song_url_id = data["songUrlId"]
+    notes_file_path = os.path.join(os.path.dirname(__file__), 'data', 'midinotes.csv')
+    song_url = f"https://p.scdn.co/mp3-preview/{song_url_id}.mp3"
+
+    # Read local CSV file and fetch song data concurrently
+    notes_data, song_data = await asyncio.gather(
+        read_local_csv(notes_file_path),
+        fetch_url(aiohttp.ClientSession(), song_url)
+    )
+
+    # Parse notes data
+    notes = pd.read_csv(io.StringIO(notes_data))
+
+    # Load audio data
+    y, sr = librosa.load(io.BytesIO(song_data))
+
+    async def generate():
+        for chunk in process_audio(y, sr, notes):
+            yield json.dumps(chunk) + '\n'
+
+    return Response(await stream_with_context(generate)(), content_type='application/json')
+
+if __name__ == '__main__':
     app.run(debug=True)
