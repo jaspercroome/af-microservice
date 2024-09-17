@@ -1,0 +1,8 @@
+quart
+quart-cors
+aiohttp
+aiofiles
+librosa
+numpy
+pandas
+hypercorn
