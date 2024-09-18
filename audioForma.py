@@ -72,5 +72,56 @@ async def song_data():
     cache.set(song_url_id, song_data, timeout=3600) 
     return(song_data, 200)
     
-if __name__ == "__main__":
+    for i, col in enumerate(cqt_h.T):
+        c_df_h = pd.DataFrame(notes).assign(magnitude=col)
+        c_df_h['note_time'] = i * time_int * 1000
+        c_df_h_final = c_df_h[c_df_h['magnitude'] >= 0.01]
+        
+        if not c_df_h_final.empty:
+            yield c_df_h_final.to_dict(orient='records')
+
+@app.route('/', methods=['GET', 'POST'])
+async def songdata():
+    if request.method == 'GET':
+        return 'Please send a POST request with {"songUrlId":"xxxxxx"} in the body for analysis', 400
+
+    if not request.is_json:
+        return 'Invalid request. Send a POST request with JSON data.', 400
+
+    data = await request.json
+    if 'songUrlId' not in data:
+        return 'Invalid request. JSON must include "songUrlId".', 400
+
+    song_url_id = data["songUrlId"]
+    notes_file_path = os.path.join(os.path.dirname(__file__), 'data', 'midinotes.csv')
+    song_url = f"https://p.scdn.co/mp3-preview/{song_url_id}.mp3"
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Read local CSV file and fetch song data concurrently
+            notes_data, song_data = await asyncio.gather(
+                read_local_csv(notes_file_path),
+                fetch_url(session, song_url)
+            )
+
+        # Parse notes data
+        notes = pd.read_csv(io.StringIO(notes_data))
+
+        # Load audio data
+        y, sr = librosa.load(io.BytesIO(song_data))
+
+        async def generate():
+            for chunk in process_audio(y, sr, notes):
+                yield json.dumps(chunk) + '\n'
+
+        return Response(await stream_with_context(generate)(), content_type='application/json')
+
+    except aiohttp.ClientError as e:
+        return f'Error fetching song data: {str(e)}', 500
+    except IOError as e:
+        return f'Error reading local CSV file: {str(e)}', 500
+    except Exception as e:
+        return f'An unexpected error occurred: {str(e)}', 500
+
+if __name__ == '__main__':
     app.run(debug=True)
