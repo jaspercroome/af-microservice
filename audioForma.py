@@ -1,8 +1,9 @@
-from flask import Flask, request
-from flask_cors import CORS 
+from quart import Quart, request
+from quart_cors import cors
+from flask_caching import Cache 
 
-import os
-from urllib.request import urlopen
+import io
+import aiohttp
 
 from librosa import load, cqt, get_duration
 from librosa.effects import hpss
@@ -12,55 +13,63 @@ from pandas import read_csv, DataFrame
 
 from numpy import abs
 
-app=Flask(__name__)
-CORS(app)
+app=Quart(__name__)
+cors(app)
+
+# Configure caching (in this case, using SimpleCache)
+app.config['CACHE_TYPE'] = 'SimpleCache'
+app.config['CACHE_DEFAULT_TIMEOUT'] = 1 * 60 * 60  # Cache timeout of 1 hr
+cache = Cache(app)
 
 @app.route('/', methods=['GET','POST'])
-def songdata():
-    if not request.data: 
+
+async def song_data():
+    data = await request.data
+    if not data:
         return('no data in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    if not request.json: 
+    
+    json_data = await request.get_json() 
+    if not json_data: 
         return('no json in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    if not 'songUrlId' in request.json:
+    if 'songUrlId' not in json_data:
         return('no \'songUrlId\' in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
-    data = request.json
+    
+    data = await request.get_json()
     song_url_id = data["songUrlId"]
-    filepath = "https://gist.githubusercontent.com/cd-jcroome/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
-    
+
+    cached_data = cache.get(song_url_id)
+    if cached_data:
+        return cached_data, 200
+
+    filepath = "data/midinotes.csv"    
+    notes = read_csv(filepath)
+
     song_url="https://p.scdn.co/mp3-preview/"+song_url_id+".mp3"
-
-    notes = read_csv(urlopen(filepath))
-
-    sample_30s = urlopen(song_url)
-
-    mp3_filepath = "tmp/"+song_url_id+".mp3"
+    # fetch the song_data
+    async with aiohttp.ClientSession() as session:
+        async with session.get(song_url) as resp:
+            mp3_data = await resp.read()
     
-    output = open(f'{mp3_filepath}', 'wb')
+    mp3_file = io.BytesIO(mp3_data)    
 
-    output.write(sample_30s.read())
-
-    file_stats = os.stat(mp3_filepath)
-
-    print(file_stats)
-    # return(mp3_filepath)
-
-    y, sr = load(mp3_filepath)
+    y, sr = load(mp3_file,sr=None)
     duration = get_duration(y=y, sr=sr)
     # split out the harmonic and percussive audio
     y_harmonic = hpss(y)[0]
     # map out the values into an array
-    cqt_h = abs(cqt(y, sr=sr,
+    cqt_h = abs(cqt(y_harmonic, sr=sr,
                                 fmin=16.35, n_bins=108, bins_per_octave=12))
     c_df_h = DataFrame(notes).join(DataFrame(cqt_h), lsuffix='n').melt(
         id_vars={'MIDI Note', 'Octave', 'Note','Viz_Angle', 'circle_fifths_X', 'circle_fifths_Y'}).rename(columns={'variable': 'note_time', 'Octave': 'octave', 'Note': 'note_name', 'value': 'magnitude'})
     # Time transformation
     time_int = duration / cqt_h.shape[1]
-    c_df_h['note_time'] = c_df_h['note_time'] * time_int * 1000
+    c_df_h['note_time'] *= time_int * 1000
 
-    c_df_h_final = c_df_h[c_df_h['magnitude'].astype(float) >= .01]
+    c_df_h_final = c_df_h[c_df_h['magnitude'] >= 0.01]
 
     song_data = c_df_h_final.groupby('note_time').apply(lambda x: x.to_json(orient='records')).to_json(orient='records')
     
+    cache.set(song_url_id, song_data, timeout=3600) 
     return(song_data, 200)
     
 if __name__ == "__main__":
