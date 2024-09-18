@@ -6,4 +6,5 @@ local_spotify_params.py
 # Anaconda
 .conda/
 *.pyc
-__pycache__/*
+__pycache__/
+__pycache__/audioForma.cpython-39.pyc

@@ -7,9 +7,6 @@ from urllib.request import urlopen
 from librosa import load, cqt, get_duration
 from librosa.effects import hpss
 
-import importlib.util
-import sys
-import audioread
 
 from pandas import read_csv, DataFrame
 
@@ -28,7 +25,7 @@ def songdata():
         return('no \'songUrlId\' in request, Send a POST request with \n{\n\t\"songUrlID\":\"xxxxxx\"\n}\n in the body for analysis',400)
     data = request.json
     song_url_id = data["songUrlId"]
-    filepath = "https://gist.githubusercontent.com/Jasparr77/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
+    filepath = "https://gist.githubusercontent.com/cd-jcroome/f365c49929bc275f15c82684f85921ca/raw/12084bd77c4bb6bc46acf36e6acf830b48443138/midinotes.csv"
     
     song_url="https://p.scdn.co/mp3-preview/"+song_url_id+".mp3"
 
